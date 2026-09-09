@@ -47,6 +47,42 @@ function validarCampos(...campos) {
   };
 }
 
+// También se valida en el servidor: no puede evitarse modificando el formulario.
+function validarPasswordSegura(req, res, next) {
+  const password = req.body?.password;
+  const esValida = typeof password === "string"
+    && password.length >= 8
+    && /[a-záéíóúñ]/i.test(password)
+    && /\d/.test(password);
+
+  if (!esValida) {
+    return res.status(400).json({ error: "La contraseña debe tener 8 caracteres como mínimo, letras y números" });
+  }
+  next();
+}
+
+function validarUsername(req, res, next) {
+  const username = req.body?.username?.trim();
+  if (!/^[a-zA-Z0-9_]{3,100}$/.test(username ?? "")) {
+    return res.status(400).json({ error: "El usuario debe tener entre 3 y 100 caracteres: letras, números o guion bajo" });
+  }
+  req.body.username = username;
+  next();
+}
+
+function validarEmail(req, res, next) {
+  const email = req.body?.email?.trim().toLowerCase();
+  const esValido = typeof email === "string"
+    && email.length <= 100
+    && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+  if (!esValido) {
+    return res.status(400).json({ error: "El email no tiene un formato válido" });
+  }
+  req.body.email = email;
+  next();
+}
+
 function usuarioPublico(usuario) {
   const { password, password_hash, ...datos } = usuario;
   return datos;
@@ -104,7 +140,7 @@ app.post("/api/logout", async (req, res) => {
   res.sendStatus(204);
 });
 
-app.post("/api/recuperacion-password", validarCampos("email"), async (req, res) => {
+app.post("/api/recuperacion-password", validarCampos("email"), validarEmail, async (req, res) => {
   const usuario = await obtenerPersonaPorEmail(req.body.email);
 
   // La misma respuesta evita revelar si un email está registrado o no.
@@ -120,7 +156,7 @@ app.post("/api/recuperacion-password", validarCampos("email"), async (req, res) 
   res.json({ message: "Si el correo está registrado, recibirás un enlace de recuperación." });
 });
 
-app.post("/api/restablecer-password", validarCampos("token", "password"), async (req, res) => {
+app.post("/api/restablecer-password", validarCampos("token", "password"), validarPasswordSegura, async (req, res) => {
   const resultado = await restablecerPasswordConToken(req.body.token, req.body.password);
   if (!resultado.success) return res.status(400).json(resultado);
 
@@ -171,7 +207,7 @@ app.post("/api/login", validarCampos("identifier", "password"), async (req, res)
   res.json({ success: true, usuario: resultado.usuario, verificationExpiresAt });
 });
 
-app.post("/api/personas", validarCampos("username", "email", "password"), async (req, res) => {
+app.post("/api/personas", validarCampos("username", "email", "password"), validarUsername, validarEmail, validarPasswordSegura, async (req, res) => {
   const { username, email, password } = req.body;
   const resultado = await crearPersona({ username, email, password });
   if (resultado?.success === false) return res.status(409).json(resultado);
@@ -185,7 +221,7 @@ app.post("/api/personas", validarCampos("username", "email", "password"), async 
   res.status(201).json({ usuario, verificationExpiresAt });
 });
 
-app.put("/api/personas/:id/username", requerirSesion, requerirEmailVerificado, requerirMismoUsuario, validarCampos("username"), async (req, res) => {
+app.put("/api/personas/:id/username", requerirSesion, requerirEmailVerificado, requerirMismoUsuario, validarCampos("username"), validarUsername, async (req, res) => {
   const { id } = req.params;
   const { username } = req.body;
   const usuario = await obtenerPersonaPorId(id);
@@ -198,7 +234,7 @@ app.put("/api/personas/:id/username", requerirSesion, requerirEmailVerificado, r
   res.json({ id: Number(id), username });
 });
 
-app.put("/api/personas/:id/password", requerirSesion, requerirEmailVerificado, requerirMismoUsuario, validarCampos("password"), async (req, res) => {
+app.put("/api/personas/:id/password", requerirSesion, requerirEmailVerificado, requerirMismoUsuario, validarCampos("password"), validarPasswordSegura, async (req, res) => {
   const { id } = req.params;
   const usuario = await obtenerPersonaPorId(id);
   if (!usuario) return res.status(404).json({ error: "Usuario no encontrado" });

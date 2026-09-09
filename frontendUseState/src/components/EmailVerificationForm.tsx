@@ -37,6 +37,12 @@ export function EmailVerificationForm({ email, expiresAt, onVerify, onResend }: 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setError('')
+
+    if (!/^\d{6}$/.test(code)) {
+      setError('El código debe tener 6 dígitos.')
+      return
+    }
+
     setIsLoading(true)
 
     try {
@@ -64,7 +70,7 @@ export function EmailVerificationForm({ email, expiresAt, onVerify, onResend }: 
   }
 
   return (
-    <form className="form" onSubmit={handleSubmit}>
+    <form className="form" onSubmit={handleSubmit} noValidate>
       <h2>Verifica tu correo</h2>
       <p>Enviamos un código de 6 dígitos a <strong>{email}</strong>.</p>
       <label className="field">
@@ -72,10 +78,8 @@ export function EmailVerificationForm({ email, expiresAt, onVerify, onResend }: 
         <input
           inputMode="numeric"
           maxLength={6}
-          pattern="[0-9]{6}"
           value={code}
           onChange={(event) => setCode(event.target.value.replace(/\D/g, ''))}
-          required
         />
       </label>
       {secondsLeft > 0 ? (

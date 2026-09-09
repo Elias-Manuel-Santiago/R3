@@ -4,6 +4,7 @@ import { EmailVerificationForm } from './components/EmailVerificationForm'
 import { PasswordRecoveryForm } from './components/PasswordRecoveryForm'
 import { RegisterForm } from './components/RegisterForm'
 import { ResetPasswordForm } from './components/ResetPasswordForm'
+import { ThemeButton } from './components/ThemeButton'
 import { UserCard } from './components/UserCard'
 import {
   getCurrentUser,
@@ -16,11 +17,13 @@ import {
   verifyEmailCode,
 } from './services/authApi'
 import type { User } from './types/user'
+import { useTheme } from './hooks/useTheme'
 import './App.css'
 
 type View = 'login' | 'register' | 'passwordRecovery'
 
 function App() {
+  const { theme, toggleTheme } = useTheme()
   // Toda la navegación se resuelve con estado, sin usar React Router.
   const [view, setView] = useState<View>('login')
   const [user, setUser] = useState<User | null>(null)
@@ -64,12 +67,13 @@ function App() {
   }
 
   if (isCheckingSession) {
-    return <main className="page">Comprobando sesión...</main>
+    return <main className="page"><ThemeButton theme={theme} onToggle={toggleTheme} />Comprobando sesión...</main>
   }
 
   if (resetToken) {
     return (
       <main className="page">
+        <ThemeButton theme={theme} onToggle={toggleTheme} />
         <section className="auth-box">
           <ResetPasswordForm
             token={resetToken}
@@ -90,6 +94,7 @@ function App() {
   if (user && !user.email_verified_at) {
     return (
       <main className="page">
+        <ThemeButton theme={theme} onToggle={toggleTheme} />
         <section className="auth-box">
           <EmailVerificationForm
             email={user.email}
@@ -109,6 +114,7 @@ function App() {
   if (user) {
     return (
       <main className="page">
+        <ThemeButton theme={theme} onToggle={toggleTheme} />
         <UserCard user={user} onLogout={handleLogout} />
       </main>
     )
@@ -116,8 +122,8 @@ function App() {
 
   return (
     <main className="page">
+      <ThemeButton theme={theme} onToggle={toggleTheme} />
       <section className="auth-box" aria-labelledby="title">
-        <h1 id="title">Sistema de usuarios</h1>
         {message && <p className="message">{message}</p>}
 
         {view === 'login' ? (

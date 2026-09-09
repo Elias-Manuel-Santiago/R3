@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { PasswordField } from './PasswordField'
+import { getPasswordError } from '../utils/password'
 
 type ResetPasswordFormProps = {
   token: string
@@ -21,6 +23,12 @@ export function ResetPasswordForm({ token, onReset }: ResetPasswordFormProps) {
       return
     }
 
+    const passwordError = getPasswordError(password)
+    if (passwordError) {
+      setError(passwordError)
+      return
+    }
+
     setIsLoading(true)
     try {
       await onReset(token, password)
@@ -32,16 +40,11 @@ export function ResetPasswordForm({ token, onReset }: ResetPasswordFormProps) {
   }
 
   return (
-    <form className="form" onSubmit={handleSubmit}>
+    <form className="form" onSubmit={handleSubmit} noValidate>
       <h2>Crea una contraseña nueva</h2>
-      <label className="field">
-        Nueva contraseña
-        <input type="password" value={password} onChange={(event) => setPassword(event.target.value)} required />
-      </label>
-      <label className="field">
-        Confirmar contraseña
-        <input type="password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} required />
-      </label>
+      <PasswordField label="Nueva contraseña" value={password} onChange={setPassword} autoComplete="new-password" />
+      <p className="form-hint">Mínimo 8 caracteres, con letras y números.</p>
+      <PasswordField label="Confirmar contraseña" value={confirmPassword} onChange={setConfirmPassword} autoComplete="new-password" />
       {error && <p className="error">{error}</p>}
       <button disabled={isLoading}>{isLoading ? 'Guardando...' : 'Restablecer contraseña'}</button>
     </form>

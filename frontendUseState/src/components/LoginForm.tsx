@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { PasswordField } from './PasswordField'
 
 type LoginFormProps = {
   onLogin: (identifier: string, password: string) => Promise<void>
@@ -15,6 +16,12 @@ export function LoginForm({ onLogin, onShowRegister, onShowPasswordRecovery }: L
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setError('')
+
+    if (!identifier.trim() || !password) {
+      setError('Completa usuario o email y contraseña.')
+      return
+    }
+
     setIsLoading(true)
 
     try {
@@ -27,25 +34,16 @@ export function LoginForm({ onLogin, onShowRegister, onShowPasswordRecovery }: L
   }
 
   return (
-    <form className="form" onSubmit={handleSubmit}>
-      <h2>Iniciar sesión</h2>
+    <form className="form" onSubmit={handleSubmit} noValidate>
+      <h1>Iniciar sesión</h1>
       <label className="field">
         Usuario o email
         <input
           value={identifier}
           onChange={(event) => setIdentifier(event.target.value)}
-          required
         />
       </label>
-      <label className="field">
-        Contraseña
-        <input
-          type="password"
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-          required
-        />
-      </label>
+      <PasswordField label="Contraseña" value={password} onChange={setPassword} autoComplete="current-password" />
       {error && <p className="error">{error}</p>}
       <button disabled={isLoading}>{isLoading ? 'Ingresando...' : 'Ingresar'}</button>
       <p>

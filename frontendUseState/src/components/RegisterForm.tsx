@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { PasswordField } from './PasswordField'
+import { getEmailError, getPasswordError, getUsernameError } from '../utils/password'
 
 type RegisterFormProps = {
   onRegister: (username: string, email: string, password: string) => Promise<void>
@@ -17,9 +19,27 @@ export function RegisterForm({ onRegister, onShowLogin }: RegisterFormProps) {
     event.preventDefault()
     setError('')
 
+    const usernameError = getUsernameError(username)
+    if (usernameError) {
+      setError(usernameError)
+      return
+    }
+
+    const emailError = getEmailError(email)
+    if (emailError) {
+      setError(emailError)
+      return
+    }
+
     // Esta validación es del formulario; la contraseña nunca se envía dos veces a la API.
     if (password !== confirmPassword) {
       setError('Las contraseñas no coinciden.')
+      return
+    }
+
+    const passwordError = getPasswordError(password)
+    if (passwordError) {
+      setError(passwordError)
       return
     }
 
@@ -34,29 +54,19 @@ export function RegisterForm({ onRegister, onShowLogin }: RegisterFormProps) {
   }
 
   return (
-    <form className="form" onSubmit={handleSubmit}>
-      <h2>Registrarse</h2>
+    <form className="form" onSubmit={handleSubmit} noValidate>
+      <h1>Registrarse</h1>
       <label className="field">
         Usuario
-        <input value={username} onChange={(event) => setUsername(event.target.value)} required />
+        <input value={username} onChange={(event) => setUsername(event.target.value)} />
       </label>
       <label className="field">
         Email
-        <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
+        <input value={email} onChange={(event) => setEmail(event.target.value)} />
       </label>
-      <label className="field">
-        Contraseña
-        <input type="password" value={password} onChange={(event) => setPassword(event.target.value)} required />
-      </label>
-      <label className="field">
-        Confirmar contraseña
-        <input
-          type="password"
-          value={confirmPassword}
-          onChange={(event) => setConfirmPassword(event.target.value)}
-          required
-        />
-      </label>
+      <PasswordField label="Contraseña" value={password} onChange={setPassword} autoComplete="new-password" />
+      <p className="form-hint">Mínimo 8 caracteres, con letras y números.</p>
+      <PasswordField label="Confirmar contraseña" value={confirmPassword} onChange={setConfirmPassword} autoComplete="new-password" />
       {error && <p className="error">{error}</p>}
       <button disabled={isLoading}>{isLoading ? 'Creando cuenta...' : 'Crear cuenta'}</button>
       <p>

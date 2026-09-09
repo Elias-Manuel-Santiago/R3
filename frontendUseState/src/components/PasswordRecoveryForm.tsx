@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { getEmailError } from '../utils/password'
 
 type PasswordRecoveryFormProps = {
   onRequest: (email: string) => Promise<string>
@@ -15,6 +16,13 @@ export function PasswordRecoveryForm({ onRequest, onShowLogin }: PasswordRecover
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setError('')
+
+    const emailError = getEmailError(email)
+    if (emailError) {
+      setError(emailError)
+      return
+    }
+
     setIsLoading(true)
 
     try {
@@ -27,12 +35,12 @@ export function PasswordRecoveryForm({ onRequest, onShowLogin }: PasswordRecover
   }
 
   return (
-    <form className="form" onSubmit={handleSubmit}>
+    <form className="form" onSubmit={handleSubmit} noValidate>
       <h2>Recuperar contraseña</h2>
       <p>Ingresa tu email y te enviaremos un enlace único.</p>
       <label className="field">
         Email
-        <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
+        <input value={email} onChange={(event) => setEmail(event.target.value)} />
       </label>
       {message && <p className="message">{message}</p>}
       {error && <p className="error">{error}</p>}
